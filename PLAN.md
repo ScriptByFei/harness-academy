@@ -170,6 +170,29 @@ Installation startet. *Prüfbar, ohne eine Zeile Oberfläche.*
 **Phase 1 — Konfigurator-PWA.** Wizard, Budget-Prüfungen, Download des Bundles,
 offline installierbar, deutsch.
 
+> **Erledigt 2026-09-22 — live.** <https://scriptbyfei.github.io/harness-academy/>
+>
+> Drei Schritte statt eines Wizards: Gerät, Modell, Kanal. Vorschau der fünf
+> Artefakte mit Reitern, Download als ZIP. Alles im Browser gerechnet — die
+> Seite kennt kein Backend und sendet nichts nach außen.
+>
+> Veröffentlichen: Push auf `main` prüft und veröffentlicht automatisch.
+> Der Ablauf liegt in `.github/workflows/deploy.yml`, die Prüfungen in
+> `tests/run_all.sh` — **91 Prüfungen über vier Ebenen**.
+>
+> Der stärkste Beweis ist Ebene 3: `web/js/render-core.js` und
+> `phase0/render.py` erzeugen dasselbe Bundle **Zeichen für Zeichen**. Ohne
+> diesen Vergleich wäre jede Prüfung aus Phase 0 wertlos, sobald jemand die
+> Anwendung benutzt statt das Skript.
+>
+> Zwei Fehler, die erst die Prüfung gefunden hat: das Raster lief auf dem
+> Handy 231 px über die Kante (ein `<pre>` zog die Spalte auf), und die
+> Prozentangabe stand mit Punkt statt Komma ("10.4 %"). Beides behoben.
+>
+> **Noch offen:** die Intel-Warnung aus `HARDWARE.md` fehlt im Fließtext der
+> App. Der Konfigurator kennt die drei Wege, sagt aber nirgends, dass ein
+> gebrauchter Intel-Mac keine Option ist.
+
 **Phase 2 — Lernpfade.** Sieben Stufen mit Verifikation:
 1. Grundinstallation (Hermes auf Pi oder VPS)
 2. Modell und Provider anbinden
