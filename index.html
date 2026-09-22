@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harness Academy — Konfigurator</title>
+<meta name="description" content="Konfigurator für ein KI-Harness auf Raspberry Pi, Mac mini oder VPS. Erzeugt eine fertige Startkonfiguration.">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="kopf">
+  <div class="kopf-inhalt">
+    <h1>Harness Academy</h1>
+    <p class="unterzeile">Konfigurator — drei Wege, ein Ergebnis: eine Startkonfiguration, die läuft.</p>
+  </div>
+</header>
+
+<main class="raster">
+
+  <!-- ---------------------------------------------------------- Eingaben -->
+  <div class="spalte-eingabe">
+
+    <section class="karte" aria-labelledby="s1">
+      <h2 id="s1"><span class="nr">1</span> Womit?</h2>
+      <p class="hilfe">Ein Gerät, das du besitzt oder kaufst. Der Rechner prüft für dich, ob der Arbeitsspeicher reicht.</p>
+      <div id="geraeteliste" class="geraeteliste" role="radiogroup" aria-label="Gerät wählen"></div>
+      <div id="ramurteil" class="urteil" hidden></div>
+    </section>
+
+    <section class="karte" aria-labelledby="s2">
+      <h2 id="s2"><span class="nr">2</span> Welches Modell?</h2>
+      <p class="hilfe">Der Anbieter liefert die Denkleistung. Er braucht einen Schlüssel — der kommt in eine Datei, nie in diese Seite.</p>
+
+      <label class="feld">
+        <span class="feld-name">Anbieter</span>
+        <select id="anbieter"></select>
+      </label>
+
+      <label class="feld">
+        <span class="feld-name">Modell-Kennung</span>
+        <input id="modell" type="text" autocomplete="off" spellcheck="false"
+               placeholder="z. B. anthropic/claude-sonnet-4.5">
+        <span class="feld-hilfe">Die Kennung findest du in der Übersicht deines Anbieters. Sie sieht aus wie <code>firma/modell</code>.</span>
+      </label>
+
+      <label class="feld">
+        <span class="feld-name">Kontextlänge</span>
+        <input id="kontext" type="number" min="8000" step="1000" value="200000" inputmode="numeric">
+        <span class="feld-hilfe">Wie viel Text das Modell auf einmal sehen kann. 200000 ist ein üblicher Wert.</span>
+      </label>
+
+      <div id="anbieterhinweis" class="hinweis" hidden></div>
+    </section>
+
+    <section class="karte" aria-labelledby="s3">
+      <h2 id="s3"><span class="nr">3</span> Wie erreichbar?</h2>
+      <p class="hilfe">Über welchen Dienst soll dein Assistent Nachrichten empfangen?</p>
+
+      <label class="feld">
+        <span class="feld-name">Kanal</span>
+        <select id="kanal"></select>
+        <span class="feld-hilfe">Der Kanal braucht einen eigenen Zugang. Der kommt in dieselbe Datei wie der Modell-Schlüssel.</span>
+      </label>
+
+      <details class="erweitert">
+        <summary>Grenzen anpassen</summary>
+        <label class="feld">
+          <span class="feld-name">Arbeitsschritte pro Auftrag</span>
+          <input id="maxturns" type="number" min="1" max="500" step="5" value="60" inputmode="numeric">
+          <span class="feld-hilfe">Wie viele Werkzeug-Runden ein Auftrag laufen darf, bevor er abbricht.</span>
+        </label>
+        <label class="feld">
+          <span class="feld-name">Zeitlimit pro Auftrag (Sekunden)</span>
+          <input id="timeout" type="number" min="30" max="7200" step="30" value="600" inputmode="numeric">
+        </label>
+      </details>
+    </section>
+
+    <div id="fehler" class="fehlerblock" hidden>
+      <h3>Das fehlt noch</h3>
+      <ul id="fehlerliste"></ul>
+    </div>
+
+    <div class="knopfreihe">
+      <button id="herunterladen" type="button" class="knopf haupt">Bundle herunterladen</button>
+      <button id="zuruecksetzen" type="button" class="knopf still">Zurücksetzen</button>
+    </div>
+  </div>
+
+  <!-- --------------------------------------------------------- Vorschau -->
+  <div class="spalte-vorschau">
+    <section class="karte vorschaukarte" aria-labelledby="sv">
+      <h2 id="sv">Was du bekommst</h2>
+      <div id="zusammenfassung" class="zusammenfassung"></div>
+
+      <div id="dateireiter" class="dateireiter" role="tablist"></div>
+      <div class="dateifenster">
+        <pre id="dateiinhalt" tabindex="0"></pre>
+      </div>
+      <div class="knopfreihe eng">
+        <button id="kopieren" type="button" class="knopf klein">Inhalt kopieren</button>
+        <span id="kopierhinweis" class="kopierhinweis" role="status" aria-live="polite"></span>
+      </div>
+
+      <div id="offen" class="offen" hidden></div>
+
+      <details class="erklaerung">
+        <summary>Warum diese Dateien?</summary>
+        <ul>
+          <li><code>config.yaml</code> — die Einstellungen. Ohne sie startet nichts.</li>
+          <li><code>.env.example</code> — Vorlage für die Schlüssel. Du füllst sie aus, Hermes liest sie.</li>
+          <li><code>setup.sh</code> — installiert und legt alles an die richtige Stelle. Mehrfach ausführbar.</li>
+          <li><code>verify.sh</code> — prüft danach, ob alles sitzt. Ändert nichts.</li>
+          <li><code>CHECKLISTE.md</code> — die Reihenfolge zum Abhaken, mit Fehlersuche.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+</main>
+
+<footer class="fuss">
+  <p>Läuft vollständig in deinem Browser. Keine Daten verlassen dieses Gerät.</p>
+</footer>
+
+<script src="js/daten.js"></script>
+<script src="js/render-core.js"></script>
+<script src="js/zip.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

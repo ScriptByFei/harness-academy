@@ -1,0 +1,407 @@
+/* Harness Academy — Gestaltung.
+ *
+ * Mobil zuerst: eine Spalte, große Ziele für den Daumen. Ab 1000 px zwei
+ * Spalten nebeneinander, damit man Eingabe und Ergebnis gleichzeitig sieht.
+ */
+
+:root {
+  --grund:        #0f172a;
+  --grund-hell:   #1e293b;
+  --karte:        #ffffff;
+  --text:         #111827;
+  --text-leise:   #6b7280;
+  --linie:        #e5e7eb;
+  --akzent:       #2563eb;
+  --akzent-dunkel:#1d4ed8;
+  --gruen:        #16a34a;
+  --gelb:         #d97706;
+  --rot:          #dc2626;
+  --radius:       14px;
+  --schatten:     0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: #f5f6f8;
+  color: var(--text);
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ------------------------------------------------------------- Kopf */
+
+.kopf {
+  background: linear-gradient(160deg, var(--grund) 0%, var(--grund-hell) 100%);
+  color: #fff;
+  padding: 22px 18px 26px;
+  padding-top: calc(22px + env(safe-area-inset-top));
+}
+
+.kopf-inhalt { max-width: 1180px; margin: 0 auto; }
+
+.kopf h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  letter-spacing: -.01em;
+}
+
+.unterzeile {
+  margin: 6px 0 0;
+  color: #cbd5e1;
+  font-size: .92rem;
+}
+
+/* ------------------------------------------------------------ Raster */
+
+.raster {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 14px 8px;
+  display: grid;
+  gap: 16px;
+  /* minmax(0, 1fr) statt der impliziten Spalte: eine Rasterspalte ist sonst
+   * mindestens so breit wie ihr breitester Inhalt. Die Dateivorschau ist ein
+   * <pre> mit langen Zeilen und zog das ganze Raster 231 px über die Kante
+   * (gemessen bei 415 px Fensterbreite). Mit minmax(0, ...) darf die Spalte
+   * schmaler werden als ihr Inhalt, und das <pre> scrollt stattdessen
+   * in sich selbst. */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Auch die inneren Raster brauchen eine Spur, die schrumpfen darf.
+ * Gemessen: die Vorschauspalte war 387 px breit, ihr automatischer
+ * Grid-Track aber 632 px — ein automatischer Track richtet sich nach dem
+ * breitesten Inhalt und ignorierte min-width:0 am Elternelement. */
+.spalte-eingabe,
+.spalte-vorschau {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.karte { min-width: 0; }
+.dateifenster { min-width: 0; }
+
+@media (min-width: 1000px) {
+  .raster {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .spalte-vorschau { position: sticky; top: 16px; }
+}
+
+/* ------------------------------------------------------------ Karten */
+
+.karte {
+  background: var(--karte);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten);
+  padding: 18px 16px;
+}
+
+.karte h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.nr {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--akzent);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 700;
+  flex: none;
+}
+
+.hilfe {
+  margin: 0 0 14px;
+  color: var(--text-leise);
+  font-size: .88rem;
+}
+
+/* -------------------------------------------------------- Geräteliste */
+
+.geraeteliste { display: grid; gap: 9px; }
+
+.geraet {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1.5px solid var(--linie);
+  border-radius: 12px;
+  padding: 13px 13px 13px 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color .15s, box-shadow .15s, transform .06s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.geraet:active { transform: scale(.995); }
+.geraet[aria-checked="true"] {
+  border-color: var(--akzent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.13);
+}
+
+.geraet-balken { width: 5px; flex: none; background: var(--linie); }
+.geraet-balken.gruen { background: var(--gruen); }
+.geraet-balken.gelb  { background: var(--gelb); }
+.geraet-balken.rot   { background: var(--rot); }
+
+.geraet-text { display: grid; gap: 2px; min-width: 0; }
+.geraet-name { font-weight: 650; }
+.geraet-tagline { font-size: .85rem; color: var(--text-leise); }
+.geraet-meta { font-size: .82rem; color: #374151; margin-top: 3px; }
+
+/* ------------------------------------------------------------ Urteil */
+
+.urteil {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 13px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  font-size: .88rem;
+  border: 1px solid var(--linie);
+  background: #f9fafb;
+}
+
+.urteil.gruen { background: #f0fdf4; border-color: #bbf7d0; }
+.urteil.gelb  { background: #fffbeb; border-color: #fde68a; }
+.urteil.rot   { background: #fef2f2; border-color: #fecaca; }
+
+.urteil-marke {
+  flex: none;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.urteil-text { color: #374151; }
+
+/* ------------------------------------------------------------ Felder */
+
+.feld { display: block; margin-bottom: 14px; }
+
+.feld-name {
+  display: block;
+  font-weight: 600;
+  font-size: .89rem;
+  margin-bottom: 5px;
+}
+
+.feld-hilfe {
+  display: block;
+  margin-top: 5px;
+  font-size: .82rem;
+  color: var(--text-leise);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  padding: 11px 12px;
+  border: 1.5px solid var(--linie);
+  border-radius: 10px;
+  background: #fff;
+  min-height: 44px;           /* bequem für den Daumen */
+}
+
+input:focus, select:focus, button:focus-visible, pre:focus {
+  outline: 2px solid var(--akzent);
+  outline-offset: 2px;
+  border-color: var(--akzent);
+}
+
+code {
+  background: #f3f4f6;
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: .87em;
+}
+
+.hinweis {
+  font-size: .86rem;
+  color: #374151;
+  background: #f8fafc;
+  border: 1px solid var(--linie);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.hinweis.warnung { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+
+details.erweitert, details.erklaerung {
+  border-top: 1px solid var(--linie);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+details summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .89rem;
+  padding: 4px 0;
+}
+
+details.erklaerung { margin-top: 14px; }
+details.erklaerung ul { margin: 8px 0 0; padding-left: 20px; font-size: .86rem; color: #374151; }
+details.erklaerung li { margin-bottom: 5px; }
+
+/* ----------------------------------------------------------- Fehler */
+
+.fehlerblock {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.fehlerblock h3 { margin: 0 0 8px; font-size: .95rem; color: #991b1b; }
+.fehlerblock ul { margin: 0; padding-left: 20px; font-size: .88rem; color: #7f1d1d; }
+.fehlerblock li { margin-bottom: 4px; }
+
+/* ----------------------------------------------------------- Knöpfe */
+
+.knopfreihe { display: flex; gap: 10px; flex-wrap: wrap; }
+.knopfreihe.eng { margin-top: 10px; align-items: center; }
+
+.knopf {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 11px;
+  border: 1.5px solid transparent;
+  padding: 13px 18px;
+  min-height: 48px;
+  cursor: pointer;
+  transition: background .15s, opacity .15s, transform .06s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.knopf:active { transform: scale(.99); }
+
+.knopf.haupt { background: var(--akzent); color: #fff; flex: 1 1 200px; }
+.knopf.haupt:hover:not(:disabled) { background: var(--akzent-dunkel); }
+.knopf.haupt:disabled { opacity: .45; cursor: not-allowed; }
+
+.knopf.still {
+  background: #fff;
+  border-color: var(--linie);
+  color: #374151;
+}
+
+.knopf.klein { padding: 8px 14px; min-height: 40px; font-size: .87rem; background: #fff; border-color: var(--linie); color: #374151; }
+
+.kopierhinweis { font-size: .84rem; color: var(--gruen); }
+
+/* ------------------------------------------------ Zusammenfassung */
+
+.zusammenfassung { display: grid; gap: 0; margin-bottom: 14px; }
+
+.zeile {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--linie);
+  font-size: .9rem;
+}
+
+.zeile:last-child { border-bottom: 0; }
+.zeile-name { color: var(--text-leise); flex: none; }
+.zeile-wert { text-align: right; font-weight: 600; word-break: break-word; }
+
+/* -------------------------------------------------------- Dateireiter */
+
+.dateireiter {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.reiter {
+  font: inherit;
+  font-size: .82rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: nowrap;
+  background: #f3f4f6;
+  border: 1.5px solid transparent;
+  border-radius: 9px;
+  padding: 8px 12px;
+  min-height: 38px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.reiter[aria-selected="true"] {
+  background: var(--grund);
+  color: #fff;
+  border-color: var(--grund);
+}
+
+.dateifenster {
+  margin-top: 10px;
+  background: var(--grund);
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+#dateiinhalt {
+  margin: 0;
+  padding: 14px;
+  color: #e2e8f0;
+  font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+  overflow: auto;
+  max-height: 46vh;
+  -webkit-overflow-scrolling: touch;
+}
+
+.offen {
+  margin-top: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: .85rem;
+  color: #78350f;
+}
+
+/* ------------------------------------------------------------- Fuß */
+
+.fuss {
+  max-width: 1180px;
+  margin: 4px auto 0;
+  padding: 14px;
+  color: var(--text-leise);
+  font-size: .82rem;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
