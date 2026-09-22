@@ -25,7 +25,19 @@ var R = require(path.join(WURZEL, "web", "js", "render-core.js"));
 var Z = require(path.join(WURZEL, "web", "js", "zip.js"));
 var D = global.HADATEN;
 
+/* Der Zeitstempel muss von aussen kommen und fuer beide Renderer derselbe
+ * sein. Sonst vergleicht dieser Test nur, wie spaet es auf der Uhr ist:
+ * Python wuerde die echte Uhrzeit einsetzen, der Browser einen leeren Wert,
+ * und der Vergleich schluege fehl, obwohl beide richtig rechnen.
+ * Lieber laut abbrechen als einen irrefuehrenden Fehler melden. */
 var ZEITSTEMPEL = process.env.HA_ZEITSTEMPEL || "";
+if (!ZEITSTEMPEL) {
+  console.error("FEHLER: HA_ZEITSTEMPEL ist nicht gesetzt.");
+  console.error("Dieser Vergleich braucht bei beiden Renderern denselben Zeitstempel,");
+  console.error("sonst vergleicht er nur die Uhrzeit. Beispiel:");
+  console.error("  HA_ZEITSTEMPEL='2026-09-22 23:40' node tests/test_bundle.js");
+  process.exit(2);
+}
 
 var bestanden = 0, fehlgeschlagen = 0;
 function ok(name) { console.log("OK    " + name); bestanden++; }

@@ -43,6 +43,11 @@ jobs:
         run: bash ./test.sh
 
       - name: Renderer-Gleichstand prüfen (Ebene 3)
+        # Fester Zeitstempel für BEIDE Renderer. Ohne ihn setzt Python die
+        # echte Uhrzeit ein und der Browser einen leeren Wert — der Vergleich
+        # meldete dann einen Unterschied, der keiner ist.
+        env:
+          HA_ZEITSTEMPEL: "2026-09-01 12:00"
         run: |
           cd phase0
           for p in pi5 macmini vps; do
