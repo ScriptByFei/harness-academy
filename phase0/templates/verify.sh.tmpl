@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Harness Academy — Verifikation für {{profil_name}}
+# Prüft eine bestehende Installation gegen das erwartete Profil.
+# Nur lesend: ändert nichts, sendet nichts nach außen.
+set -uo pipefail
+
+fehler=0
+zeile() { printf '%-34s %s\n' "$1" "$2"; }
+gut()   { zeile "$1" "OK   $2"; }
+schlecht() { zeile "$1" "FEHL $2"; fehler=$((fehler+1)); }
+
+echo "Verifikation — Profil {{profil_name}} ({{arch}}, {{ram_gb}} GB)"
+echo "Erwartet: Hermes ~850 MB, Dienst via {{service_manager}}"
+echo "----------------------------------------------------------------"
+
+# --- RAM
+RAM_MB=$(awk '/MemTotal/ {printf "%d", $2/1024}' /proc/meminfo 2>/dev/null || echo 0)
+if [ "$RAM_MB" -ge 2048 ]; then
+  gut "RAM" "${RAM_MB} MB"
+else
+  schlecht "RAM" "${RAM_MB} MB — zu wenig"
+fi
+
+# --- Installation
+if command -v hermes >/dev/null 2>&1; then
+  gut "hermes" "$(hermes --version 2>/dev/null | head -1)"
+else
+  schlecht "hermes" "nicht im PATH"
+fi
+
+# --- config.yaml
+if [ -f "$HOME/.hermes/config.yaml" ]; then
+  gut "config.yaml" "vorhanden"
+else
+  schlecht "config.yaml" "fehlt"
+fi
+
+# --- Secrets
+if [ -f "$HOME/.hermes/.env" ]; then
+  RECHTE=$(stat -c '%a' "$HOME/.hermes/.env" 2>/dev/null || echo "?")
+  if [ "$RECHTE" = "600" ]; then
+    gut ".env" "vorhanden, Rechte 600"
+  else
+    schlecht ".env" "Rechte $RECHTE — sollten 600 sein"
+  fi
+else
+  schlecht ".env" "fehlt"
+fi
+
+# --- Dienst (Format hängt am Profil)
+if [ "{{service_manager}}" = "systemd" ]; then
+  if systemctl --user is-active hermes-gateway.service >/dev/null 2>&1; then
+    gut "Dienst" "hermes-gateway.service läuft (systemd)"
+  else
+    schlecht "Dienst" "hermes-gateway.service nicht aktiv — hermes gateway install"
+  fi
+else
+  PLIST="$HOME/Library/LaunchAgents"
+  if ls "$PLIST" 2>/dev/null | grep -qi hermes; then
+    gut "Dienst" "LaunchAgent vorhanden (launchd)"
+  else
+    schlecht "Dienst" "kein LaunchAgent — hermes gateway install"
+  fi
+fi
+
+# --- Speicherplatz
+FREI_GB=$(df -BG --output=avail "$HOME" 2>/dev/null | tail -1 | tr -dc '0-9')
+if [ -n "${FREI_GB:-}" ] && [ "$FREI_GB" -ge 5 ]; then
+  gut "Speicher" "${FREI_GB} GB frei"
+elif [ -n "${FREI_GB:-}" ]; then
+  schlecht "Speicher" "nur ${FREI_GB} GB frei"
+fi
+
+echo "----------------------------------------------------------------"
+if [ "$fehler" -eq 0 ]; then
+  echo "Alles in Ordnung."
+  exit 0
+else
+  echo "$fehler Punkt(e) offen."
+  exit 1
+fi

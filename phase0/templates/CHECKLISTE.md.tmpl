@@ -1,0 +1,59 @@
+# Checkliste — {{profil_name}}
+
+Erzeugt {{timestamp}} · Profil `{{profil_id}}` ({{arch}}, {{ram_gb}} GB RAM)
+
+RAM-Stand: **{{auslastung}} %** durch Hermes belegt · `{{ram_status}}` — {{ram_text}}
+
+---
+
+## Vorbereitung
+
+- [ ] Gerät bereit: {{profil_name}}, Betriebssystem: {{os_empfehlung}}
+- [ ] Netzwerkzugang vorhanden
+- [ ] Zugang zum Modell-Anbieter (**{{provider_label}}**) — Schlüssel besorgt
+- [ ] {{kanal_secret}} besorgt (für Kanal: {{kanal_label}})
+
+## Installation
+
+- [ ] `.env.example` nach `.env` kopieren, Werte eintragen, `chmod 600 .env`
+- [ ] `./setup.sh` ausführen
+- [ ] `hermes gateway setup` — Kanal einrichten
+- [ ] `hermes gateway install` — Dienst einrichten
+      → erzeugt {{dienst_artefakt}}
+- [ ] `./verify.sh` ausführen — alles grün?
+
+## Erster Erfolg
+
+- [ ] Nachricht an den Bot senden, Antwort kommt zurück
+- [ ] Dienst neu starten, Nachricht kommt weiterhin an (also überlebt er einen Neustart)
+
+## Verstehen
+
+- [ ] `hermes --help` ansehen — welche Befehle gibt es?
+- [ ] `hermes tools` — welche Werkzeuge sind aktiv?
+- [ ] `hermes model` — welches Modell ist eingestellt?
+- [ ] Logs ansehen: `journalctl --user -u hermes-gateway -f` (Linux)
+- [ ] `~/.hermes/config.yaml` öffnen und die eigenen Einträge wiederfinden
+
+## Aufräumen und Betreiben
+
+- [ ] `.env` steht in `.gitignore` (falls du ein Repo anlegst)
+- [ ] `hermes update` einmal ausgeführt
+- [ ] Notiert: Wie viel RAM belegt der Gateway bei dir? (Vergleich zu den {{auslastung}} % aus dem Profil)
+
+---
+
+## Wenn etwas nicht läuft
+
+| Symptom | Erste Prüfung |
+|---|---|
+| Bot antwortet nicht | `systemctl --user status hermes-gateway` bzw. LaunchAgent prüfen |
+| Dienst startet nicht | `verify.sh` laufen lassen, alle Punkte durchgehen |
+| Modell-Fehler | Schlüssel in `.env` korrekt? `hermes model` |
+| Nach Neustart weg | `hermes gateway install` wurde ausgeführt? |
+
+## Noch offen in diesen Dateien
+
+Platzhalter, die ersetzt werden müssen, stehen in spitzen Klammern — etwa
+die Modell-Kennung. Der Renderer listet beim Erzeugen auf, welche offen sind
+und in welcher Datei sie stehen.

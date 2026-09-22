@@ -1,0 +1,9 @@
+# Erzeugte Artefakte. Werden von den Prüfungen neu gebaut und gehören
+# deshalb nicht in die Versionsverwaltung.
+phase0/out/
+tests/_js_out/
+
+# Arbeitsreste
+*.pyc
+__pycache__/
+.DS_Store

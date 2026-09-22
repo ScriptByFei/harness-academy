@@ -1,0 +1,23 @@
+# Harness Academy — erzeugter Startpunkt
+# Profil   : {{profil_name}} ({{profil_id}}, {{arch}})
+# Erzeugt  : {{timestamp}}
+# Hardware : {{ram_gb}} GB RAM -> Hermes belegt {{auslastung}} %
+#
+# Diese Datei ist ein START, kein fertiges Produkt. Wo eine Entscheidung
+# getroffen wurde, steht ein Kommentar. Secrets gehören NICHT hier hinein,
+# sondern in .env (siehe .env.example).
+
+model:
+  default: {{model_id}}
+  provider: {{provider_key}}
+{{base_url_block}}
+
+agent:
+  # max_turns begrenzt, wie viele Tool-Runden ein Auftrag laufen darf.
+  # {{max_turns}} ist ein vorsichtiger Startwert für {{profil_name}}.
+  max_turns: {{max_turns}}
+  gateway_timeout: {{gateway_timeout}}
+
+# Kanäle und Werkzeuge werden NICHT hier vorbelegt.
+# Nach dem Aufsetzen ausfüllen mit:  hermes gateway setup
+# Das fragt Kanal und Zugang ab und schreibt nur die nötigen Felder.

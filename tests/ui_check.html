@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="utf-8"><title>Oberflächen-Prüfung</title></head>
+<body>
+<h1>Oberflächen-Prüfung — die echte App, mit echten Klicks</h1>
+<iframe id="rahmen" src="../web/index.html" style="width:1100px;height:700px;border:1px solid #ccc"></iframe>
+<pre id="ausgabe">laeuft ...</pre>
+<script>
+/* Fährt die ausgelieferte index.html in einem Rahmen und bedient sie wie ein
+ * Mensch: Gerät anklicken, Modell eintippen, Datei umschalten. Erst damit ist
+ * belegt, dass die Oberfläche selbst funktioniert — nicht nur der Kern.
+ *
+ * Läuft unter headless_shell mit --allow-file-access-from-files, sonst
+ * verweigert der Browser den Zugriff auf den Rahmen. */
+var zeilen = [], bestanden = 0, fehlgeschlagen = 0;
+function p(name, bedingung, detail) {
+  if (bedingung) { zeilen.push("PASS  " + name); bestanden++; }
+  else { zeilen.push("FAIL  " + name + (detail ? "  -- " + detail : "")); fehlgeschlagen++; }
+}
+function fertig() {
+  document.getElementById("ausgabe").textContent =
+    zeilen.join("\n") + "\n\nbestanden: " + bestanden + "   fehlgeschlagen: " + fehlgeschlagen;
+}
+
+var rahmen = document.getElementById("rahmen");
+
+rahmen.addEventListener("load", function () {
+  try {
+    lauf();
+  } catch (e) {
+    zeilen.push("FAIL  Ausnahme im Ablauf: " + e.message);
+    fehlgeschlagen++;
+  }
+  fertig();
+});
+
+function lauf() {
+  var doc = rahmen.contentDocument;
+  var win = rahmen.contentWindow;
+  p("Rahmen geladen", !!doc && !!doc.getElementById("geraeteliste"));
+
+  var geraete = doc.querySelectorAll(".geraet");
+  p("drei Geräte zur Auswahl", geraete.length === 3, "gefunden: " + geraete.length);
+
+  p("erstes Gerät ist vorausgewählt",
+    geraete.length > 0 && geraete[0].getAttribute("aria-checked") === "true");
+
+  /* --- Gerät wechseln: VPS anklicken --- */
+  var vps = null;
+  geraete.forEach(function (g) { if (g.dataset.profil === "vps") vps = g; });
+  p("VPS-Knopf vorhanden", !!vps);
+  if (vps) vps.click();
+
+  var nachKlick = doc.querySelectorAll(".geraet");
+  p("VPS ist nach dem Klick ausgewählt",
+    nachKlick[2].getAttribute("aria-checked") === "true");
+  p("nur ein Gerät ist ausgewählt",
+    Array.prototype.filter.call(nachKlick, function (g) {
+      return g.getAttribute("aria-checked") === "true";
+    }).length === 1);
+
+  p("Zusammenfassung nennt das neue Gerät",
+    /VPS/.test(doc.getElementById("zusammenfassung").textContent));
+
+  /* --- Unvollständige Eingabe: der Knopf muss sperren --- */
+  p("Herunterladen ist ohne Modell gesperrt",
+    doc.getElementById("herunterladen").disabled === true);
+  p("Fehlerblock ist sichtbar",
+    doc.getElementById("fehler").hidden === false);
+  p("Fehler nennt das fehlende Modell",
+    /Modell-Kennung/.test(doc.getElementById("fehlerliste").textContent));
+
+  /* --- Vorschau zeigt bekannte Werte, nicht den Platzhalter --- */
+  var vorschau = doc.getElementById("dateiinhalt").textContent;
+  p("Vorschau enthält den Gerätenamen",
+    vorschau.indexOf("VPS (gemietet)") !== -1);
+  p("Vorschau enthält keinen rohen Platzhalter mehr",
+    vorschau.indexOf("{{") === -1, vorschau.slice(0, 80));
+
+  /* --- Modell eintippen --- */
+  var modell = doc.getElementById("modell");
+  modell.value = "anthropic/claude-sonnet-4.5";
+  modell.dispatchEvent(new win.Event("input", { bubbles: true }));
+
+  p("Herunterladen ist jetzt freigegeben",
+    doc.getElementById("herunterladen").disabled === false);
+  p("Fehlerblock ist verschwunden",
+    doc.getElementById("fehler").hidden === true);
+
+  var zusammen = doc.getElementById("zusammenfassung").textContent;
+  p("Zusammenfassung nennt das Modell",
+    zusammen.indexOf("anthropic/claude-sonnet-4.5") !== -1, zusammen.slice(0, 200));
+
+  /* --- config.yaml in der Vorschau prüfen --- */
+  var cfg = doc.getElementById("dateiinhalt").textContent;
+  p("config.yaml nennt provider: openrouter", /provider: openrouter/.test(cfg));
+  p("config.yaml enthält keine base_url", !/^\s{2}base_url:/m.test(cfg));
+  p("config.yaml nennt das Modell", /anthropic\/claude-sonnet-4.5/.test(cfg));
+
+  /* --- Datei umschalten --- */
+  var reiter = doc.querySelectorAll(".reiter");
+  p("fünf Dateireiter", reiter.length === 5, "gefunden: " + reiter.length);
+
+  var setupReiter = null;
+  reiter.forEach(function (r) { if (r.dataset.datei === "setup.sh") setupReiter = r; });
+  if (setupReiter) setupReiter.click();
+
+  var setup = doc.getElementById("dateiinhalt").textContent;
+  p("setup.sh wird angezeigt", setup.indexOf("#!/usr/bin/env bash") === 0);
+  p("setup.sh nennt den Kanal", /Telegram/.test(setup));
+  p("setup.sh verweist auf hermes gateway install",
+    /hermes gateway install/.test(setup));
+
+  /* --- Anbieter wechseln auf eigenen Endpunkt --- */
+  var anbieter = doc.getElementById("anbieter");
+  anbieter.value = "custom";
+  anbieter.dispatchEvent(new win.Event("change", { bubbles: true }));
+  p("eigener Endpunkt wird erklärt",
+    /base_url|Adresse/i.test(doc.getElementById("anbieterhinweis").textContent));
+
+  /* --- Zurücksetzen --- */
+  doc.getElementById("zuruecksetzen").click();
+  p("Zurücksetzen wählt wieder das erste Gerät",
+    doc.querySelectorAll(".geraet")[0].getAttribute("aria-checked") === "true");
+  p("Zurücksetzen leert das Modell",
+    doc.getElementById("modell").value === "");
+}
+</script>
+</body>
+</html>

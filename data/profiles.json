@@ -1,0 +1,250 @@
+{
+  "meta": {
+    "projekt": "Harness Academy",
+    "stand": "2026-09-22",
+    "waehrung": "EUR",
+    "scope": "v1 = nur Hermes",
+    "hinweis_preise": "Preise veralten schnell. In der App mit Datum anzeigen oder pflegbar machen.",
+    "hinweis_zweck": "Diese Profile steuern die Hardware-Ebene des Konfigurators. Der Verbrauch ist ein optionales Feld, keine Empfehlungsgrundlage."
+  },
+  "rechenregel_ram": {
+    "hermes_belegt_mb": 850,
+    "davon": {
+      "kern": 713,
+      "browser_tool": 134,
+      "vektor_store": 3
+    },
+    "quelle": "gemessen auf dem Referenzsystem (Pi 5, fei89)",
+    "os_overhead_mb": 400,
+    "ampel": [
+      {
+        "bis_mb": 1024,
+        "status": "rot",
+        "text": "Reicht nicht. Hermes belegt mehr als die Maschine hat und swappt sofort."
+      },
+      {
+        "bis_mb": 2048,
+        "status": "gelb",
+        "text": "Knapp. Läuft, aber ohne Reserve für Browser-Tool oder Vektor-Store."
+      },
+      {
+        "bis_mb": null,
+        "status": "gruen",
+        "text": "Reichlich Luft."
+      }
+    ]
+  },
+  "dienstformate": {
+    "systemd": {
+      "plattformen": [
+        "pi5",
+        "vps"
+      ],
+      "erzeugt_von": "hermes gateway install",
+      "artefakt": "systemd-User-Unit unter ~/.config/systemd/user/",
+      "beispiel_units": [
+        "hermes-gateway.service",
+        "hermes-serve.service"
+      ],
+      "scope": "User-Unit, WantedBy=default.target (kein system-weiter Dienst nötig)",
+      "renderer_regel": "Unit NICHT selbst templaten. Den Befehl `hermes gateway install` ausgeben — Hermes erzeugt eine korrekte, versionssichere Unit (ExecStart zeigt in die eigene venv, ExecStop/ExecStopPost räumen den cgroup)."
+    },
+    "launchd": {
+      "plattformen": [
+        "macmini"
+      ],
+      "erzeugt_von": "hermes gateway install",
+      "artefakt": "LaunchAgent unter ~/Library/LaunchAgents/",
+      "renderer_regel": "Derselbe Befehl wie unter Linux. Hermes erkennt macOS selbst und wählt launchd. Kein gesondertes Template."
+    }
+  },
+  "profile": [
+    {
+      "id": "pi5",
+      "name": "Raspberry Pi 5",
+      "tagline": "Basteln und verstehen",
+      "arch": "arm64",
+      "ram_mb": 8192,
+      "hermes_auslastung_prozent": 10.4,
+      "reserve_prozent": 84.7,
+      "service_manager": "systemd",
+      "install_weg": "install.sh",
+      "os_empfehlung": "Raspberry Pi OS Lite (64-bit)",
+      "preis": {
+        "anschaffung_eur": 215,
+        "spanne_eur": [
+          215,
+          235
+        ],
+        "monatlich_eur": null
+      },
+      "preis_aufschluesselung": [
+        {
+          "teil": "Pi 5 8 GB (nackt)",
+          "eur": 185
+        },
+        {
+          "teil": "Netzteil 27 W",
+          "eur": 12
+        },
+        {
+          "teil": "Aktiver Kühler",
+          "eur": 6
+        },
+        {
+          "teil": "Gehäuse",
+          "eur": 10
+        },
+        {
+          "teil": "microSD 64 GB",
+          "eur": 10
+        }
+      ],
+      "watt_idle": 6,
+      "lerneffekt_hardware": "hoch",
+      "aufwand_bis_erster_bot": "mittel",
+      "staerken": [
+        "aarch64 ist bei Hermes Tier-1 — gepflegte Plattform",
+        "größte Community, jedes Problem ist irgendwo beschrieben",
+        "unser Vorzeigesystem läuft auf identischer Hardware — direkter Vergleich möglich"
+      ],
+      "schwaechen": [
+        "Zubehör einzeln kaufen, Board allein genügt nicht",
+        "mehr Schritte bis zum ersten Bot als bei VPS oder Mac"
+      ],
+      "fuer_wen": "Wer das System von innen verstehen will und den Zusammenbau nicht scheut.",
+      "hinweise": [
+        "8 GB genügen — Hermes braucht 850 MB. Der Aufpreis auf 16 GB bringt für Hermes keinen Nutzen.",
+        "Aktive Kühlung ist Pflicht: der Pi 5 drosselt ohne Kühler unter Dauerlast.",
+        "Für Dauerbetrieb ist NVMe über HAT robuster als microSD — optional, nicht zwingend."
+      ]
+    },
+    {
+      "id": "macmini",
+      "name": "Mac mini",
+      "tagline": "Einfach und leise",
+      "arch": "apple-silicon",
+      "ram_mb": 16384,
+      "hermes_auslastung_prozent": 5.2,
+      "reserve_prozent": 92.4,
+      "service_manager": "launchd",
+      "install_weg": "install.sh oder Hermes Desktop",
+      "os_empfehlung": "aktuelles macOS",
+      "varianten": [
+        {
+          "modell": "Mac mini M6 (2026)",
+          "ram_gb": 16,
+          "ssd_gb": 256,
+          "eur": 1049,
+          "status": "aktuell, seit 22.09.2026 lieferbar"
+        },
+        {
+          "modell": "Mac mini M4 (2024)",
+          "ram_gb": 16,
+          "ssd_gb": 512,
+          "eur": 949,
+          "status": "Vorgängergeneration, im Preisverfall"
+        }
+      ],
+      "preis": {
+        "anschaffung_eur": 1049,
+        "spanne_eur": [
+          949,
+          1049
+        ],
+        "monatlich_eur": null
+      },
+      "watt_idle": 4,
+      "lerneffekt_hardware": "niedrig",
+      "aufwand_bis_erster_bot": "niedrig",
+      "staerken": [
+        "wenigste Fehlerquellen — kein Zusammenbau, kein OS-Image, keine Kühlung",
+        "praktisch unhörbar, läuft als Arbeitsrechner mit",
+        "Apple Silicon ist Hermes-Tier-1"
+      ],
+      "schwaechen": [
+        "teuerster Weg — rund das Vierfache des Pi",
+        "für Hermes allein deutlich überdimensioniert",
+        "einzelne Werkzeuge haben ARM-Sonderfälle"
+      ],
+      "fuer_wen": "Wer keinen Bastelabend will und den Rechner ohnehin am Schreibtisch hat.",
+      "hinweise": [
+        "NUR Apple Silicon. macOS auf Intel ist bei Hermes eine nicht unterstützte Plattform: der Desktop-Installer startet dort nicht, und der Hersteller nimmt keine Fixes dafür an.",
+        "Kein systemd: Hermes nutzt launchd. Gleicher Befehl, anderes Artefakt.",
+        "Headless-Betrieb braucht einen HDMI-Dummy, sonst entsteht keine GUI-Sitzung.",
+        "macOS 26 Tahoe ist die letzte Version für Intel-Macs — Intel-Mac minis sind damit keine Empfehlung."
+      ]
+    },
+    {
+      "id": "vps",
+      "name": "VPS (gemietet)",
+      "tagline": "Kein Gerät im Zimmer",
+      "arch": "x86_64 oder arm64",
+      "ram_mb": 4096,
+      "hermes_auslastung_prozent": 20.8,
+      "reserve_prozent": 69.5,
+      "service_manager": "systemd",
+      "install_weg": "install.sh",
+      "os_empfehlung": "Ubuntu oder Debian",
+      "varianten": [
+        {
+          "anbieter": "netcup",
+          "produkt": "VPS 500 G12",
+          "ram_gb": 4,
+          "vcore": 2,
+          "monatlich_eur": 4.96
+        },
+        {
+          "anbieter": "Hetzner",
+          "produkt": "CAX11",
+          "ram_gb": 4,
+          "vcore": 2,
+          "monatlich_eur": 4.99,
+          "arch": "arm64"
+        },
+        {
+          "anbieter": "Hetzner",
+          "produkt": "CAX21",
+          "ram_gb": 8,
+          "vcore": 4,
+          "monatlich_eur": 8.49,
+          "arch": "arm64"
+        },
+        {
+          "anbieter": "netcup",
+          "produkt": "VPS 1000 G12",
+          "ram_gb": 8,
+          "vcore": 4,
+          "monatlich_eur": 8.7
+        }
+      ],
+      "preis": {
+        "anschaffung_eur": 0,
+        "spanne_eur": [
+          0,
+          0
+        ],
+        "monatlich_eur": 4.96
+      },
+      "watt_idle": null,
+      "lerneffekt_hardware": "keiner",
+      "aufwand_bis_erster_bot": "niedrig",
+      "staerken": [
+        "schnellster Weg zum ersten Bot — kein Gerät, keine Kühlung, kein Netzwerk zu Hause",
+        "Zugriff von überall, Snapshots vor riskanten Änderungen",
+        "kein Port-Forwarding nötig: Telegram arbeitet über ausgehende Verbindungen"
+      ],
+      "schwaechen": [
+        "monatliche Kosten ohne Ende und ohne Restwert",
+        "Daten liegen beim Anbieter — bei einem System, das Schlüssel verwaltet, ist das eine bewusste Entscheidung",
+        "kein Hardware-Lerneffekt"
+      ],
+      "fuer_wen": "Wer keinen Kasten hinstellen will oder keinen geeigneten Rechner hat.",
+      "hinweise": [
+        "4 GB sind die richtige Wahl (850 MB = 21 % Auslastung). 8 GB nur, wenn später mehr dazukommt.",
+        "2 GB nicht nehmen — zu wenig Luft.",
+        "ARM-Angebote sind unbedenklich: aarch64 ist Hermes-Tier-1."
+      ]
+    }
+  ]
+}

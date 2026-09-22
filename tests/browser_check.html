@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="utf-8"><title>Browser-Pruefung</title></head>
+<body>
+<h1>Pruefung im echten Browser</h1>
+<pre id="ausgabe">laeuft...</pre>
+<script src="../web/js/daten.js"></script>
+<script src="../web/js/render-core.js"></script>
+<script src="../web/js/zip.js"></script>
+<script>
+/* Prueft die Module in einer echten Browser-Umgebung: TextEncoder, Blob,
+ * URL.createObjectURL. Node hat diese Teile nicht in derselben Form, deshalb
+ * ist der Node-Test allein kein Beweis fuer die laufende App. */
+var zeilen = [], bestanden = 0, fehlgeschlagen = 0;
+function p(name, bedingung, detail) {
+  if (bedingung) { zeilen.push("PASS  " + name); bestanden++; }
+  else { zeilen.push("FAIL  " + name + (detail ? " -- " + detail : "")); fehlgeschlagen++; }
+}
+
+var D = window.HADATEN, R = window.HARender, Z = window.HAZip;
+var TS = "2026-09-22 23:40";
+
+p("HADATEN geladen", !!D);
+p("HARender geladen", !!R);
+p("HAZip geladen", !!Z);
+p("TextEncoder vorhanden", typeof TextEncoder !== "undefined");
+p("Blob vorhanden", typeof Blob !== "undefined");
+
+var wahl = {
+  profil: "pi5",
+  provider: { key: "openrouter", label: "OpenRouter" },
+  modell: { id: "anthropic/claude-sonnet-4.5", context_length: 200000 },
+  agent: { max_turns: 60, gateway_timeout: 600 },
+  kanal: "telegram"
+};
+
+var bundle = null;
+try { bundle = R.baueBundle(D, wahl, TS); p("Bundle gebaut", true); }
+catch (e) { p("Bundle gebaut", false, e.message); }
+
+if (bundle) {
+  p("fuenf Dateien", Object.keys(bundle.dateien).length === 5,
+    Object.keys(bundle.dateien).join(","));
+  p("config.yaml setzt provider: openrouter",
+    /^\s{2}provider:\s*openrouter\s*$/m.test(bundle.dateien["config.yaml"]));
+  p("config.yaml ohne base_url", !/^\s{2}base_url:/m.test(bundle.dateien["config.yaml"]));
+  p("config.yaml mit Begruendungskommentar",
+    /base_url bewusst nicht gesetzt/.test(bundle.dateien["config.yaml"]));
+  p("CHECKLISTE enthaelt den Kanalnamen", /Telegram/.test(bundle.dateien["CHECKLISTE.md"]));
+  p("setup.sh ist ausfuehrbar gedacht", /^#!\/usr\/bin\/env bash/.test(bundle.dateien["setup.sh"]));
+}
+
+/* ZIP wirklich erzeugen und als Blob lesen — der Weg, den die App geht. */
+try {
+  var dateien = Object.keys(bundle.dateien).map(function (n) {
+    return { name: n, inhalt: bundle.dateien[n], ausfuehrbar: /\.sh$/.test(n) };
+  });
+  var bytes = Z.baue(dateien);
+  var blob = new Blob([bytes], { type: "application/zip" });
+  p("ZIP als Blob erzeugt", blob.size === bytes.length && blob.size > 3000,
+    "Groesse " + blob.size);
+  p("ZIP-Signatur PK", bytes[0] === 0x50 && bytes[1] === 0x4B);
+} catch (e) { p("ZIP als Blob erzeugt", false, e.message); }
+
+/* Eingabe-Pruefung */
+try {
+  var leer = JSON.parse(JSON.stringify(wahl));
+  leer.modell.id = "";
+  p("leere Modellkennung wird gemeldet", R.pruefeEingabe(D, leer).probleme.length > 0);
+  p("gute Eingabe ohne Beanstandung", R.pruefeEingabe(D, wahl).probleme.length === 0);
+} catch (e) { p("Eingabe-Pruefung", false, e.message); }
+
+document.getElementById("ausgabe").textContent =
+  zeilen.join("\n") + "\n\nbestanden: " + bestanden + "   fehlgeschlagen: " + fehlgeschlagen;
+</script>
+</body>
+</html>

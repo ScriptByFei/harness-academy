@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Harness Academy — Setup für {{profil_name}}
+# Erzeugt {{timestamp}} für {{ram_gb}} GB RAM.
+#
+# Idempotent: jeder Schritt prüft erst, ob er schon erledigt ist.
+set -euo pipefail
+
+HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROFIL="{{profil_name}}"
+
+schritt() { printf '\n==> %s\n' "$1"; }
+ok()      { printf '    OK   %s\n' "$1"; }
+warn()    { printf '    WARN %s\n' "$1"; }
+
+# ---------------------------------------------------------------- 1. Hardware
+schritt "Hardware prüfen"
+RAM_MB=$(awk '/MemTotal/ {printf "%d", $2/1024}' /proc/meminfo)
+echo "    RAM: ${RAM_MB} MB  (Profil {{profil_name}}: {{ram_mb}} MB, Hermes braucht ~850 MB)"
+if [ "$RAM_MB" -lt 1024 ]; then
+  echo "    FEHLER: Zu wenig RAM. Hermes belegt mehr als diese Maschine hat." >&2
+  exit 1
+elif [ "$RAM_MB" -lt 2048 ]; then
+  warn "Wenig RAM — ohne Reserve für Browser-Tool oder Vektor-Store."
+else
+  ok "RAM reicht."
+fi
+
+# ---------------------------------------------------------------- 2. Hermes
+schritt "Hermes installieren"
+if command -v hermes >/dev/null 2>&1; then
+  ok "schon vorhanden: $(hermes --version 2>/dev/null | head -1)"
+else
+  echo "    installiere von hermes-agent.nousresearch.com ..."
+  curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+  # shellcheck disable=SC1091
+  [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc" || true
+  ok "installiert"
+fi
+
+# ---------------------------------------------------------------- 3. config
+schritt "Konfiguration einspielen"
+ZIEL="$HOME/.hermes"
+mkdir -p "$ZIEL"
+if [ -f "$ZIEL/config.yaml" ]; then
+  SICHERUNG="$ZIEL/config.yaml.vor-setup-$(date +%Y%m%d-%H%M%S)"
+  cp "$ZIEL/config.yaml" "$SICHERUNG"
+  warn "vorhandene config.yaml gesichert nach $SICHERUNG"
+fi
+cp "$HIER/config.yaml" "$ZIEL/config.yaml"
+ok "config.yaml kopiert"
+
+if [ -f "$HIER/.env" ]; then
+  cp "$HIER/.env" "$ZIEL/.env"
+  chmod 600 "$ZIEL/.env"
+  ok ".env kopiert und auf 600 gesetzt"
+else
+  warn ".env fehlt noch — cp .env.example .env und Werte eintragen"
+fi
+
+# ---------------------------------------------------------------- 4. Kanal
+schritt "Kanal einrichten"
+echo "    Kanal '{{kanal_label}}' wird interaktiv eingerichtet:"
+echo "      hermes gateway setup"
+echo "    (hier absichtlich nicht automatisch — der Bot-Token gehört in .env)"
+
+# ---------------------------------------------------------------- 5. Dienst
+schritt "Hintergrunddienst einrichten"
+# WICHTIG: Die Dienstdatei NICHT selbst schreiben. 'hermes gateway install'
+# erzeugt auf Linux eine systemd-Unit, auf macOS einen LaunchAgent — jeweils
+# passend zur Hermes-Version.
+echo "      hermes gateway install"
+
+# ---------------------------------------------------------------- 6. Prüfen
+schritt "Prüfen"
+echo "      ./verify.sh"
+
+printf '\nFertig. Nächster Schritt: hermes gateway setup\n'

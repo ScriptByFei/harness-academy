@@ -1,0 +1,14 @@
+{
+  "profil": "macmini",
+  "provider": {
+    "key": "openrouter",
+    "label": "OpenRouter"
+  },
+  "modell": {
+    "id": "<diesen-wert-eintragen>",
+    "context_length": 200000
+  },
+  "agent": { "max_turns": 60, "gateway_timeout": 600 },
+  "kanal": "telegram",
+  "_hinweis_provider": "openrouter ist eingebaut. Keine base_url setzen - sie wuerde auf 'Custom endpoint' umschalten."
+}

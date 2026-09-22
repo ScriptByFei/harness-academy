@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><title>Breitenmessung</title>
+<style>body{margin:0;font:14px system-ui} iframe{border:0;width:430px;height:900px}</style>
+</head><body>
+<iframe id="r" src="../web/index.html"></iframe>
+<pre id="ausgabe">laeuft...</pre>
+<script>
+document.getElementById("r").addEventListener("load", function () {
+  var doc = this.contentDocument, win = this.contentWindow;
+  var d = doc.documentElement, b = doc.body;
+  var z = [];
+
+  z.push("iframe innerWidth          : " + win.innerWidth);
+  z.push("html clientWidth           : " + d.clientWidth);
+  z.push("html scrollWidth           : " + d.scrollWidth);
+  z.push("Überlauf                   : " + (d.scrollWidth - d.clientWidth) + " px");
+
+  function info(sel) {
+    var el = doc.querySelector(sel);
+    if (!el) return sel + ": nicht gefunden";
+    var cs = win.getComputedStyle(el);
+    var r = el.getBoundingClientRect();
+    return sel + "\n    breite=" + Math.round(r.width) +
+      " clientWidth=" + el.clientWidth + " scrollWidth=" + el.scrollWidth +
+      "\n    min-width=" + cs.minWidth +
+      (cs.gridTemplateColumns && cs.gridTemplateColumns !== "none"
+        ? "\n    grid-template-columns=" + cs.gridTemplateColumns : "");
+  }
+
+  z.push("");
+  [".raster", ".spalte-eingabe", ".spalte-vorschau", ".karte.vorschaukarte",
+   ".dateifenster", "#dateiinhalt", ".geraeteliste", ".geraet"].forEach(function (s) {
+    z.push(info(s));
+  });
+
+  document.getElementById("ausgabe").textContent = z.join("\n");
+});
+</script></body></html>

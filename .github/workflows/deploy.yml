@@ -1,0 +1,75 @@
+name: Prüfen & Veröffentlichen (GitHub Pages)
+
+# Ein Push auf main prüft und veröffentlicht. Die Website ist die oberste
+# Ebene: nichts geht online, was die Prüfungen nicht besteht.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  pruefen:
+    name: Prüfen
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auschecken
+        uses: actions/checkout@v5
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Abhängigkeiten
+        run: pip install --quiet "pyyaml>=6,<7"
+
+      - name: Web-Bündel gegen die Quellen prüfen
+        run: python3 tools/build_web.py --pruefen
+
+      - name: Erzeugung prüfen (Ebene 1)
+        working-directory: phase0
+        run: bash ./test.sh
+
+      - name: Renderer-Gleichstand prüfen (Ebene 3)
+        run: |
+          cd phase0
+          for p in pi5 macmini vps; do
+            python3 render.py "examples/freund-$p.json" --out out
+          done
+          cd ..
+          node tests/test_bundle.js
+
+      - name: Symbole reproduzierbar?
+        run: |
+          pip install --quiet "pillow>=11,<13"
+          python3 tools/make_icons.py
+          git diff --exit-code -- web/icons/ \
+            || { echo "Die Symbole in web/icons/ weichen von tools/make_icons.py ab." >&2; exit 1; }
+
+  veroeffentlichen:
+    name: Veröffentlichen
+    runs-on: ubuntu-latest
+    needs: pruefen
+    steps:
+      - name: Auschecken
+        uses: actions/checkout@v5
+
+      - name: Nur den Web-Ordner veröffentlichen
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./web
+          publish_branch: gh-pages
+          force_orphan: true
